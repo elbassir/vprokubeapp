@@ -5,10 +5,10 @@ metadata:
   labels:
     app: vprodb
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: vprodb
-  replicas: 1
   template:
     metadata:
       labels:
@@ -17,9 +17,8 @@ spec:
       containers:
         - name: vprodb
           image: elbassir/vprofiledb
-            #args:
-            #- "--ignore-db-dir"
-            #- "lost+found"
+#          args:
+#            - "--ignore-db-dir=lost+found"
           volumeMounts:
             - mountPath: /var/lib/mysql
               name: vpro-db-data
@@ -36,18 +35,15 @@ spec:
         zone: us-west-1a
       volumes:
         - name: vpro-db-data
-          # This AWS EBS volume must already exist.
           awsElasticBlockStore:
             volumeID: vol-020e145dcb6a4b45c
             fsType: ext4
 
       initContainers:
-          - name: busybox
-            image: busybox
-            args:
-              - "rm"
-              - "-rf"
-              - "/var/lib/mysql/lost+found"
-            volumeMounts:
-              - name: vpro-db-data
-                mountPath: /var/lib/mysql
+        - name: busybox
+          image: busybox:latest
+          command: ['sh', '-c', 'sleep 5 && rm -rf /var/lib/mysql/lost+found']
+          args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: vpro-db-data
